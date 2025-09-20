@@ -36,7 +36,7 @@ The project integrates several major movie databases:
 box_office/
 ├── code/
 │   ├── dataset-exploration.ipynb    # Initial data exploration
-│   └── data-viz.ipynb              # Feature engineering & analysis
+│   └── feature-engineering.ipynb   # Feature engineering & analysis
 ├── data/                           # Large datasets (local only)
 │   ├── *.csv                      # TMDB and box office data
 │   └── *.tsv                      # IMDB data files

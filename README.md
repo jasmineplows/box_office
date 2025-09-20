@@ -14,6 +14,14 @@ The project integrates several major movie databases:
 - **TMDB Dataset**: 930k+ movies with revenue, budget, cast, and crew data
 - **IMDB Dataset**: Movie basics and ratings (11.9M entries, 1.6M ratings)
 
+### Dataset Sources
+Download the required datasets from Kaggle:
+
+- [Box Office Data 1984-2024](https://www.kaggle.com/datasets/harios/box-office-data-1984-to-2024-from-boxofficemojo)
+- [TMDB Movies Daily Updates](https://www.kaggle.com/datasets/alanvourch/tmdb-movies-daily-updates/versions/472)
+- [TMDB Movies Dataset 930k](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/versions/554)
+- [IMDB Dataset](https://www.kaggle.com/datasets/ashirwadsangwan/imdb-dataset/versions/832)
+
 *Note: Large data files (>100MB) are stored locally and excluded from version control.*
 
 ## 🛠 Features
@@ -64,10 +72,10 @@ box_office/
    pip install -r requirements.txt
    ```
 
-3. **Download datasets** (not included in repo due to size):
-   - TMDB movie datasets
-   - IMDB title files
-   - Box office data
+3. **Download datasets** from the Kaggle links above and place in `data/` directory:
+   - Box office data → `data/boxoffice_data_2024.csv`
+   - TMDB datasets → `data/TMDB_*.csv`
+   - IMDB files → `data/title.*.tsv`
 
 4. **Start Jupyter:**
    ```bash

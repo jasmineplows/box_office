@@ -1,0 +1,9 @@
+{
+    "jupyter.jupyterCommandLineArguments": [],
+    "jupyter.alwaysTrustNotebooks": true,
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "jupyter.enableScrollingForCellOutputs": true,
+    "jupyter.showVariableViewWhenDebugging": true,
+    "jupyter.interactiveWindow.textEditor.executeSelection": false
+}

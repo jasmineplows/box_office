@@ -1,0 +1,23 @@
+# API Keys and Secrets
+config.json
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# macOS
+.DS_Store
+
+# Data files (large files that exceed GitHub's 100MB limit)
+data/*.csv
+data/*.tsv

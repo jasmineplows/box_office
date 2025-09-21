@@ -1,10 +1,10 @@
 # Box Office Prediction & Movie Analysis
 
-A comprehensive data science project for analyzing movie performance and predicting box office success using multiple film industry datasets.
+A data science project for predicting 2026 domestic box office success.
 
 ## 🎬 Project Overview
 
-This project combines data from multiple sources to analyze movie performance patterns and build predictive models for box office success. The analysis focuses on movies from 2015 onwards with complete revenue and budget data.
+This project combines data from multiple sources to analyze movie performance patterns and build predictive models for box office success. The analysis focuses on predominately English-speaking movies from 2015 onwards with complete revenue and budget data.
 
 ## 📊 Datasets
 
@@ -90,22 +90,4 @@ box_office/
 - **Franchise identification** for Marvel, Star Wars, DC, Fast & Furious, Harry Potter
 - **Revenue analysis** by studio, genre, country, and franchise status
 
-## 🔧 Key Technologies
 
-- **Python**: pandas, numpy, matplotlib, seaborn
-- **Jupyter Notebooks**: Interactive analysis and visualization
-- **Data Sources**: TMDB API, IMDB datasets, BoxOfficeMojo
-
-## 📝 Notes
-
-- Large data files are excluded from version control due to GitHub's 100MB limit
-- The project focuses on theatrical releases with complete financial data
-- Franchise detection is limited to US/UK productions to avoid false positives
-
-## 🤝 Contributing
-
-This is a personal data science project, but suggestions and improvements are welcome!
-
-## 📄 License
-
-This project is for educational and analysis purposes.

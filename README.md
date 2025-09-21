@@ -1,53 +1,54 @@
 # Box Office Prediction & Movie Analysis
 
-A data science project for predicting 2026 domestic box office success.
+A data science project for predicting **US domestic box office** success using machine learning.
 
 ## 🎬 Project Overview
 
-This project combines data from multiple sources to analyze movie performance patterns and build predictive models for box office success. The analysis focuses on predominately English-speaking movies from 2015 onwards with complete revenue and budget data.
+This project analyzes movie performance patterns and builds predictive models for **US domestic** box office success. The analysis focuses on English-speaking movies from 2015 onwards with complete domestic revenue and budget data.
 
-## 📊 Datasets
+**🎯 Key Feature: Uses actual US domestic box office revenue (not worldwide) for accurate US market predictions.**
 
-The project integrates several major movie databases:
+## 📊 Current Dataset
 
-- **Box Office Data (1984-2024)**: Historical performance from BoxOfficeMojo
-- **TMDB Dataset**: 930k+ movies with revenue, budget, cast, and crew data
-- **IMDB Dataset**: Movie basics and ratings (11.9M entries, 1.6M ratings)
+- **820 movies** (2015-2024) with complete domestic revenue data
+- **Enhanced box office data** from multiple sources with domestic + worldwide revenue
+- **Comprehensive metadata** from TMDB (production companies, genres, cast, crew)
+- **Verified accuracy**: Star Wars Force Awakens shows $858M domestic (not $2.07B worldwide)
 
-### Dataset Sources
-Download the required datasets from Kaggle:
-
-- [Box Office Data 1984-2024](https://www.kaggle.com/datasets/harios/box-office-data-1984-to-2024-from-boxofficemojo)
-- [TMDB Movies Daily Updates](https://www.kaggle.com/datasets/alanvourch/tmdb-movies-daily-updates/versions/472)
-- [TMDB Movies Dataset 930k](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/versions/554)
-- [IMDB Dataset](https://www.kaggle.com/datasets/ashirwadsangwan/imdb-dataset/versions/832)
-
-*Note: Large data files (>100MB) are stored locally and excluded from version control.*
+### Top US Domestic Performers (2015-2024):
+1. **Avengers: Endgame** - $858.4M domestic
+2. **Spider-Man: No Way Home** - $804.8M domestic
+3. **Top Gun: Maverick** - $718.7M domestic
+4. **Black Panther** - $700.1M domestic
+5. **Avatar: The Way of Water** - $684.1M domestic
 
 ## 🛠 Features
 
 ### Data Processing & Feature Engineering
-- **Studio Detection**: Comprehensive mapping of major film studios and subsidiaries
-- **Genre Analysis**: One-hot encoding of all unique genres in the dataset
-- **Country/Language Flags**: Binary features for production countries and spoken languages
-- **Franchise Detection**: Identification of major film franchises (Marvel, Star Wars, DC, etc.)
-- **Sequel Indicators**: Pattern matching for sequels and series films
+- **Studio Detection**: Hierarchical classification (major vs mid-tier studios)
+- **Genre Analysis**: One-hot encoding of all movie genres
+- **Country/Language Flags**: Production origin and language features
+- **Franchise Detection**: Marvel, Star Wars, DC, Fast & Furious identification
+- **Sequel Indicators**: Pattern matching for franchise films
 
-### Data Quality
-- Filtered to movies with revenue > 0 and budget > 0
-- Excluded adult films and documentaries from franchise analysis
-- US/UK production focus for major franchise identification
+### Data Quality & Filtering
+- ✅ **Domestic revenue focus**: US theatrical box office only
+- ✅ **Content filtering**: Removes TV shows, TV movies, streaming-first releases
+- ✅ **English language**: Focus on US market-relevant films
+- ✅ **Quality threshold**: Movies with meaningful budget and revenue data
 
 ## 📁 Project Structure
 
 ```
 box_office/
 ├── code/
-│   ├── dataset-exploration.ipynb    # Initial data exploration
-│   └── feature-engineering.ipynb   # Feature engineering & analysis
-├── data/                           # Large datasets (local only)
-│   ├── *.csv                      # TMDB and box office data
-│   └── *.tsv                      # IMDB data files
+│   ├── domestic-data-integration.ipynb    # Creates domestic dataset
+│   └── feature-engineering.ipynb         # Analysis & feature creation
+├── data/
+│   ├── enhanced_box_office_data(2000-2024)u.csv  # Source domestic data
+│   ├── TMDB_movie_dataset_v11.csv               # Movie metadata
+│   ├── dataset_domestic.csv                     # Clean domestic dataset
+│   └── title.*.tsv                              # IMDB ratings/info
 ├── requirements.txt               # Python dependencies
 └── README.md                     # This file
 ```
@@ -57,7 +58,7 @@ box_office/
 ### Prerequisites
 - Python 3.8+
 - Jupyter Notebook
-- ~6GB disk space for datasets
+- Kaggle API (for data updates)
 
 ### Installation
 
@@ -72,22 +73,59 @@ box_office/
    pip install -r requirements.txt
    ```
 
-3. **Download datasets** from the Kaggle links above and place in `data/` directory:
-   - Box office data → `data/boxoffice_data_2024.csv`
-   - TMDB datasets → `data/TMDB_*.csv`
-   - IMDB files → `data/title.*.tsv`
-
-4. **Start Jupyter:**
+3. **Start analysis:**
    ```bash
-   jupyter notebook
+   jupyter notebook code/feature-engineering.ipynb
    ```
+
+### Data Pipeline
+
+1. **Source**: Enhanced box office dataset with verified domestic revenue
+2. **Integration**: Merge with TMDB metadata via `domestic-data-integration.ipynb`
+3. **Analysis**: Feature engineering and modeling via `feature-engineering.ipynb`
 
 ## 📈 Analysis Highlights
 
-- **371,040 movies** after filtering (adult films and zero revenue/budget removed)
-- **Comprehensive genre analysis** with one-hot encoding for all unique genres
-- **Major studio detection** for Disney, Warner Bros, Universal, Sony, Paramount, Fox, MGM, Lionsgate
-- **Franchise identification** for Marvel, Star Wars, DC, Fast & Furious, Harry Potter
-- **Revenue analysis** by studio, genre, country, and franchise status
+- **820 movies** with complete domestic revenue data (2015-2024)
+- **Comprehensive studio analysis** with major + mid-tier classification
+- **Genre analysis** with one-hot encoding for all unique genres
+- **Franchise identification** for Marvel, Star Wars, DC, and major series
+- **Revenue analysis** focused on US domestic market performance
 
+### Studio Performance (Average Domestic Revenue):
+- **Disney**: Highest average domestic revenue
+- **Warner Bros**: Strong consistent performance
+- **Universal**: Major franchise success
+- **Sony**: Solid mid-tier performance
 
+## 🎯 Why Domestic Revenue Matters
+
+Using **US domestic box office** instead of worldwide revenue provides:
+
+- ✅ **Accurate US predictions**: Relevant for US theatrical decisions
+- ✅ **Market-specific insights**: US audience preferences and behavior
+- ✅ **Comparable metrics**: Consistent currency and market conditions
+- ✅ **Strategic relevance**: US is the primary theatrical market for most studios
+
+## 🔄 Data Updates
+
+The project uses Kaggle API for dataset updates:
+
+```bash
+# Update domestic box office data
+kaggle datasets download -d aditya126/movies-box-office-dataset-2000-2024
+
+# Re-run integration
+jupyter notebook code/domestic-data-integration.ipynb
+```
+
+## 📊 Key Insights
+
+- **Franchise films** dominate top domestic revenue
+- **Disney/Marvel** leads in average revenue per film
+- **Domestic vs Worldwide**: US typically represents 30-45% of global revenue
+- **Genre trends**: Action/Adventure and Sci-Fi perform best domestically
+
+---
+
+**Built for accurate US domestic box office prediction** 🎬📊

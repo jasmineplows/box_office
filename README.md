@@ -1,56 +1,46 @@
 # Box Office Prediction & Movie Analysis
 
-A data science project for predicting **US domestic box office** success using machine learning.
+This project aims to predict **US 2026 domestic box office** success.
 
 ## 🎬 Project Overview
 
-This project analyzes movie performance patterns and builds predictive models for **US domestic** box office success. The analysis focuses on English-speaking movies from 2015 onwards with complete domestic revenue and budget data.
+The analysis combines **Box Office Mojo** lifetime domestic grosses with **TMDb metadata** to create a comprehensive dataset of English-language theatrical releases from 2015-2025.
 
-**🎯 Key Feature: Uses actual US domestic box office revenue (not worldwide) for accurate US market predictions.**
-
-## 📊 Current Dataset
-
-- **820 movies** (2015-2024) with complete domestic revenue data
-- **Enhanced box office data** from multiple sources with domestic + worldwide revenue
-- **Comprehensive metadata** from TMDB (production companies, genres, cast, crew)
-- **Verified accuracy**: Star Wars Force Awakens shows $858M domestic (not $2.07B worldwide)
-
-### Top US Domestic Performers (2015-2024):
-1. **Avengers: Endgame** - $858.4M domestic
-2. **Spider-Man: No Way Home** - $804.8M domestic
-3. **Top Gun: Maverick** - $718.7M domestic
-4. **Black Panther** - $700.1M domestic
-5. **Avatar: The Way of Water** - $684.1M domestic
+## 📊 Current Datasets
+- **Box Office Mojo**: All-time domestic grosses + distributor information
+- **TMDb Integration**: Rich metadata (genres, cast, runtime, vote metrics)
 
 ## 🛠 Features
 
 ### Data Processing & Feature Engineering
-- **Studio Detection**: Hierarchical classification (major vs mid-tier studios)
-- **Genre Analysis**: One-hot encoding of all movie genres
-- **Country/Language Flags**: Production origin and language features
-- **Franchise Detection**: Marvel, Star Wars, DC, Fast & Furious identification
-- **Sequel Indicators**: Pattern matching for franchise films
+- **Distributor Analysis**: Major studio classification based on Box Office Mojo distributors
+- **Genre Processing**: TMDb genre ID to name mapping with one-hot encoding
+- **Franchise Detection**: Marvel, Star Wars, DC, Fast & Furious identification with flexible pattern matching
+- **Sequel Indicators**: Comprehensive pattern matching for franchise films
+- **Remake Detection**: Disney live-action remakes, media adaptations, and reboot identification
+- **Language Features**: English-language focus for domestic market relevance
 
 ### Data Quality & Filtering
-- ✅ **Domestic revenue focus**: US theatrical box office only
-- ✅ **Content filtering**: Removes TV shows, TV movies, streaming-first releases
-- ✅ **English language**: Focus on US market-relevant films
-- ✅ **Quality threshold**: Movies with meaningful budget and revenue data
+- ✅ **Lifetime domestic focus**: Box Office Mojo all-time domestic grosses
+- ✅ **Content filtering**: Removes TV shows, documentaries, non-English films
+- ✅ **Theatrical releases**: Focus on movies with significant domestic box office
+- ✅ **Distributor integration**: Enhanced with year-by-year distributor data
 
 ## 📁 Project Structure
 
 ```
 box_office/
 ├── code/
-│   ├── domestic-data-integration.ipynb    # Creates domestic dataset
-│   └── feature-engineering.ipynb         # Analysis & feature creation
+│   ├── 1.get-data.ipynb                     # Data collection & merging
+│   ├── 2.feature-engineering.ipynb         # Advanced feature engineering & visualization
+│   └── movie_lists.py                      # Curated movie lists for IP detection
 ├── data/
-│   ├── enhanced_box_office_data(2000-2024)u.csv  # Source domestic data
-│   ├── TMDB_movie_dataset_v11.csv               # Movie metadata
-│   ├── dataset_domestic.csv                     # Clean domestic dataset
-│   └── title.*.tsv                              # IMDB ratings/info
-├── requirements.txt               # Python dependencies
-└── README.md                     # This file
+│   ├── boxoffice_alltime_domestic.csv       # Box Office Mojo domestic data
+│   ├── tmdb_filtered.csv                    # TMDb movie metadata
+│   ├── dataset_domestic_lifetime_merged.csv # Merged raw dataset
+│   └── dataset_domestic_processed.csv       # Final processed dataset (67 features)
+├── config.json                             # TMDb API configuration
+└── README.md                              # This documentation
 ```
 
 ## 🚀 Getting Started
@@ -58,7 +48,7 @@ box_office/
 ### Prerequisites
 - Python 3.8+
 - Jupyter Notebook
-- Kaggle API (for data updates)
+- TMDb API key (v3 or v4 token)
 
 ### Installation
 
@@ -68,64 +58,63 @@ box_office/
    cd box_office
    ```
 
-2. **Install dependencies:**
+2. **Set up TMDb API:**
    ```bash
-   pip install -r requirements.txt
+   # Create config.json with your TMDb API key
+   {
+     "TMDB_API_KEY": "your_api_key_here"
+   }
    ```
 
-3. **Start analysis:**
+3. **Run the analysis:**
    ```bash
-   jupyter notebook code/feature-engineering.ipynb
+   jupyter notebook code/1.get-data.ipynb      # Data collection
+   jupyter notebook code/2.feature-engineering.ipynb  # Feature creation
    ```
 
 ### Data Pipeline
 
-1. **Source**: Enhanced box office dataset with verified domestic revenue
-2. **Integration**: Merge with TMDB metadata via `domestic-data-integration.ipynb`
-3. **Analysis**: Feature engineering and modeling via `feature-engineering.ipynb`
+1. **Collection**: `1.get-data.ipynb` scrapes Box Office Mojo + fetches TMDb data
+2. **Merging**: Intelligent exact + fuzzy matching with distributor integration
+3. **Feature Engineering**: `2.feature-engineering.ipynb` creates 67 features with advanced IP detection
+4. **Visualization**: Interactive charts showing studio, genre, and IP performance trends by year
 
 ## 📈 Analysis Highlights
 
-- **820 movies** with complete domestic revenue data (2015-2024)
-- **Comprehensive studio analysis** with major + mid-tier classification
-- **Genre analysis** with one-hot encoding for all unique genres
-- **Franchise identification** for Marvel, Star Wars, DC, and major series
-- **Revenue analysis** focused on US domestic market performance
+- **1,532 movies** with complete lifetime domestic revenue data (2015-2025)
+- **67 engineered features** including studio flags, genre encoding, and IP detection
+- **Comprehensive IP analysis** covering franchises, remakes, adaptations, and superhero films
+- **Interactive visualizations** showing performance trends by year across studios, genres, and IP categories
+- **Advanced pattern matching** for flexible franchise and remake identification
+- **Revenue analysis** focused on lifetime US domestic market performance
 
-### Studio Performance (Average Domestic Revenue):
-- **Disney**: Highest average domestic revenue
-- **Warner Bros**: Strong consistent performance
-- **Universal**: Major franchise success
-- **Sony**: Solid mid-tier performance
-
-## 🎯 Why Domestic Revenue Matters
-
-Using **US domestic box office** instead of worldwide revenue provides:
-
-- ✅ **Accurate US predictions**: Relevant for US theatrical decisions
-- ✅ **Market-specific insights**: US audience preferences and behavior
-- ✅ **Comparable metrics**: Consistent currency and market conditions
-- ✅ **Strategic relevance**: US is the primary theatrical market for most studios
 
 ## 🔄 Data Updates
 
-The project uses Kaggle API for dataset updates:
+The project automatically scrapes fresh data:
 
 ```bash
-# Update domestic box office data
-kaggle datasets download -d aditya126/movies-box-office-dataset-2000-2024
+# Re-run data collection (updates Box Office Mojo + TMDb data)
+jupyter notebook code/1.get-data.ipynb
 
-# Re-run integration
-jupyter notebook code/domestic-data-integration.ipynb
+# Set FORCE_REFRESH = True in notebook to bypass cache
 ```
 
-## 📊 Key Insights
+## 📊 Key Performance Insights
 
-- **Franchise films** dominate top domestic revenue
-- **Disney/Marvel** leads in average revenue per film
-- **Domestic vs Worldwide**: US typically represents 30-45% of global revenue
-- **Genre trends**: Action/Adventure and Sci-Fi perform best domestically
+### IP vs Original Content
+- **IP movies** represent ~9% of releases but generate disproportionate revenue
+- **IP advantage**: IP movies earn significantly more on average than original content
+- **Superhero dominance**: 63 superhero movies show 400%+ revenue advantage over non-superhero films
+- **Live-action remake success**: Disney/DreamWorks remakes show 360%+ advantage over non-remakes
 
----
+### Studio & Genre Trends
+- **Disney dominance**: Walt Disney Studios leads in average revenue per movie
+- **Action/Adventure**: Consistently highest-grossing primary genres
+- **Franchise concentration**: Marvel (26 films), DC (13 films), and Star Wars (5 films) drive major revenue
+- **Year-over-year evolution**: Clear trends in studio market share and genre preferences (2015-2025)
 
-**Built for accurate US domestic box office prediction** 🎬📊
+### Market Evolution
+- **IP percentage trends**: Analysis shows changing reliance on established intellectual properties
+- **Studio competition**: Visualization reveals shifting dominance between major distributors
+- **Genre performance**: Clear patterns in which genres dominate domestic box office by year

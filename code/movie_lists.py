@@ -127,6 +127,30 @@ FAST_FURIOUS_FILMS = [
     "Fast X",
 ]
 
+# Other Franchise Sequels (sequels to established franchises)
+FRANCHISE_SEQUELS = [
+    # Jurassic World (sequels to Jurassic Park)
+    "Jurassic World",
+    "Jurassic World: Fallen Kingdom",
+    "Jurassic World Dominion",
+
+    # Despicable Me sequels/spinoffs
+    "Despicable Me 2",
+    "Despicable Me 3",
+    "Minions",
+    "Minions: The Rise of Gru",
+
+    # Pixar sequels
+    "Finding Dory",
+    "The Secret Life of Pets",
+    "The Secret Life of Pets 2",
+
+    # Other franchise sequels
+    "Jumanji: Welcome to the Jungle",
+    "Jumanji: The Next Level",
+    "Twisters",  # Sequel to Twister (1996)
+]
+
 # Harry Potter / Wizarding World
 WIZARDING_WORLD_FILMS = [
     "Fantastic Beasts and Where to Find Them",
@@ -134,7 +158,7 @@ WIZARDING_WORLD_FILMS = [
     "Fantastic Beasts: The Secrets of Dumbledore",
 ]
 
-# Other Media Adaptations (TV Shows, Games, Toys)
+# Other Media Adaptations (TV Shows, Games, Toys, Book/Franchise Sequels)
 MEDIA_ADAPTATIONS = [
     "Transformers",
     "Transformers: Revenge of the Fallen",
@@ -156,6 +180,35 @@ MEDIA_ADAPTATIONS = [
     "Angry Birds Movie",
     "The Angry Birds Movie 2",
     "Battleship",
+
+    # Jurassic World franchise (sequels to original Jurassic Park)
+    "Jurassic World",
+    "Jurassic World: Fallen Kingdom",
+    "Jurassic World Dominion",
+
+    # Despicable Me/Minions franchise
+    "Despicable Me 2",
+    "Despicable Me 3",
+    "Minions",
+    "Minions: The Rise of Gru",
+
+    # Other animated sequels/franchises
+    "The Secret Life of Pets",
+    "The Secret Life of Pets 2",
+    "Finding Dory",
+
+    # Jumanji franchise
+    "Jumanji: Welcome to the Jungle",
+    "Jumanji: The Next Level",
+
+    # James Bond franchise (action/spy IP)
+    "Spectre",
+    "No Time to Die",
+    "Skyfall",
+
+    # Video game adaptations
+    "The Minecraft Movie",
+    "Minecraft",
 ]
 
 # Non-MCU Superhero Films
@@ -178,6 +231,7 @@ NON_MCU_SUPERHERO_FILMS = [
     "Deadpool 2",
     "Logan",
     "Fantastic Four (2015)",
+    "Fantastic Four",
 
     # DC Films (already covered in DC_FILMS list)
     # Warner Bros Batman
@@ -230,7 +284,9 @@ REMAKE_PATTERNS = {
         'How to Train Your Dragon', 'Sonic', 'Pokemon', 'Detective.*Pikachu',
         'Transformers', 'G.I. Joe', 'Teenage Mutant Ninja Turtles',
         'The Smurfs', 'Garfield', 'Scooby', 'Tom.*Jerry', 'Angry Birds',
-        'Battleship', 'Clue', 'Monopoly'
+        'Battleship', 'Clue', 'Monopoly', 'Jurassic.*World', 'Minions',
+        'Despicable.*Me', 'Finding.*Dory', 'Jumanji', 'Secret.*Life.*Pets',
+        'Spectre', 'Bond', 'James.*Bond', 'Minecraft'
     ],
     'superhero': [
         'Spider.*Man', 'Batman', 'Superman', 'Wonder Woman', 'Aquaman',

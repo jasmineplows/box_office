@@ -141,14 +141,18 @@ FRANCHISE_SEQUELS = [
     "Minions: The Rise of Gru",
 
     # Pixar sequels
-    "Finding Dory",
-    "The Secret Life of Pets",
-    "The Secret Life of Pets 2",
+    "Finding Dory"
 
     # Other franchise sequels
     "Jumanji: Welcome to the Jungle",
     "Jumanji: The Next Level",
     "Twisters",  # Sequel to Twister (1996)
+    "Puss in Boots: The Last Wish",  # Sequel to Puss in Boots (2011)
+
+    # James Bond sequels
+    "Spectre",
+    "Skyfall",
+    "No Time to Die",
 ]
 
 # Harry Potter / Wizarding World
@@ -193,9 +197,9 @@ MEDIA_ADAPTATIONS = [
     "Minions: The Rise of Gru",
 
     # Other animated sequels/franchises
-    "The Secret Life of Pets",
     "The Secret Life of Pets 2",
     "Finding Dory",
+    "Puss in Boots: The Last Wish",
 
     # Jumanji franchise
     "Jumanji: Welcome to the Jungle",
@@ -285,7 +289,7 @@ REMAKE_PATTERNS = {
         'Transformers', 'G.I. Joe', 'Teenage Mutant Ninja Turtles',
         'The Smurfs', 'Garfield', 'Scooby', 'Tom.*Jerry', 'Angry Birds',
         'Battleship', 'Clue', 'Monopoly', 'Jurassic.*World', 'Minions',
-        'Despicable.*Me', 'Finding.*Dory', 'Jumanji', 'Secret.*Life.*Pets',
+        'Despicable.*Me', 'Finding.*Dory', 'Jumanji',
         'Spectre', 'Bond', 'James.*Bond', 'Minecraft'
     ],
     'superhero': [
@@ -309,3 +313,44 @@ REMAKE_PATTERNS = {
 REMAKE_TITLE_INDICATORS = [
     'Reboot', 'Remake', 'Origins', 'Begins', 'Returns', 'Forever', 'Rising'
 ]
+
+# Title corrections for data quality
+TITLE_CORRECTIONS = {
+    # Fix common truncated or incorrect titles
+    'Hedgehog': 'Sonic the Hedgehog 3',
+    'The Wild': 'The Wild Robot',
+    'Deadpool': 'Deadpool & Wolverine',  # If truncated
+    'Transformer': 'Transformers',
+}
+
+def apply_title_corrections(df):
+    """
+    Apply systematic title corrections to fix data quality issues
+
+    Args:
+        df: DataFrame with 'title' and 'release_year' columns
+
+    Returns:
+        DataFrame with corrected titles
+    """
+    corrections_applied = 0
+
+    for incorrect_title, correct_title in TITLE_CORRECTIONS.items():
+        # Look for exact matches or partial matches that might be truncated
+        mask = df['title'].str.contains(incorrect_title, case=False, na=False) & (df['title'] != correct_title)
+
+        if mask.any():
+            # Only fix if the found title is significantly shorter (likely truncated)
+            problematic_entries = df[mask]
+            for idx, row in problematic_entries.iterrows():
+                if len(row['title']) < len(correct_title) * 0.8:  # Title is much shorter than expected
+                    df.loc[idx, 'title'] = correct_title
+                    corrections_applied += 1
+                    print(f"✅ Title correction: '{row['title']}' → '{correct_title}' ({row['release_year']})")
+
+    if corrections_applied > 0:
+        print(f"Applied {corrections_applied} title corrections")
+    else:
+        print("No title corrections needed")
+
+    return df

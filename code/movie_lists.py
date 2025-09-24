@@ -105,6 +105,10 @@ DC_FILMS = [
     "The Flash",
     "Blue Beetle",
     "Aquaman and the Lost Kingdom",
+    "The Batman",
+    "Joker",
+    "Joker: Folie à Deux",
+    "Superman",
 ]
 
 # Star Wars Films (Disney Era)
@@ -127,29 +131,80 @@ FAST_FURIOUS_FILMS = [
     "Fast X",
 ]
 
-# Other Franchise Sequels (sequels to established franchises)
+# Other Franchise Sequels (sequels or spin-offs to established franchises)
 FRANCHISE_SEQUELS = [
     # Jurassic World (sequels to Jurassic Park)
     "Jurassic World",
     "Jurassic World: Fallen Kingdom",
     "Jurassic World Dominion",
 
-    # Despicable Me sequels/spinoffs
+    # Despicable Me / Minions
     "Despicable Me 2",
     "Despicable Me 3",
     "Minions",
     "Minions: The Rise of Gru",
 
-    # Pixar sequels
-    "Finding Dory"
+    # Pixar sequels and spin-offs
+    "Finding Dory",
+    "Ralph Breaks the Internet",
+    "Lightyear",
 
-    # Other franchise sequels
-    "Jumanji: Welcome to the Jungle",
-    "Jumanji: The Next Level",
-    "Twisters",  # Sequel to Twister (1996)
-    "Puss in Boots: The Last Wish",  # Sequel to Puss in Boots (2011)
+    # Franchise continuations and spin-offs
+    "Bad Boys for Life",
+    "Beetlejuice Beetlejuice",
+    "Bumblebee",
+    "Blade Runner 2049",
+    "Creed",
+    "Doctor Sleep",
+    "Glass",
+    "Godzilla vs. Kong",
+    "Halloween",
+    "Indiana Jones and the Dial of Destiny",
+    "Jason Bourne",
+    "John Wick: Chapter 2",
+    "John Wick: Chapter 3 - Parabellum",
+    "Kingdom of the Planet of the Apes",
+    "Logan",
+    "Mamma Mia! Here We Go Again",
+    "Maleficent: Mistress of Evil",
+    "Happy Death Day 2U",
+    "Maze Runner: The Death Cure",
+    "Maze Runner: The Scorch Trials",
+    "Now You See Me 2",
+    "Ocean's Eight",
+    "10 Cloverfield Lane",
+    "Pacific Rim: Uprising",
+    "Split",
+    "Scream",
+    "Scream VI",
+    "Star Trek Beyond",
+    "The Equalizer 2",
+    "The Equalizer 3",
+    "The Nun",
+    "The Nun II",
+    "28 Years Later",
+    "Twisters",
+    "War for the Planet of the Apes",
 
-    # James Bond sequels
+    # Fantasy franchises
+    "Fantastic Beasts: The Crimes of Grindelwald",
+    "Fantastic Beasts: The Secrets of Dumbledore",
+
+    # Animated franchise entries
+    "Hotel Transylvania 3: Summer Vacation",
+
+    # Musical franchises
+    "Frozen II",
+
+    # Live-action fairy tale spin-offs
+    "Puss in Boots: The Last Wish",
+
+    # Horror franchises
+    "A Quiet Place Part II",
+    "Annabelle: Creation",
+    "Annabelle Comes Home",
+
+    # Bond films
     "Spectre",
     "Skyfall",
     "No Time to Die",
@@ -184,6 +239,8 @@ MEDIA_ADAPTATIONS = [
     "Angry Birds Movie",
     "The Angry Birds Movie 2",
     "Battleship",
+    "Barbie",
+    "The Super Mario Bros. Movie",
 
     # Jurassic World franchise (sequels to original Jurassic Park)
     "Jurassic World",
@@ -200,6 +257,7 @@ MEDIA_ADAPTATIONS = [
     "The Secret Life of Pets 2",
     "Finding Dory",
     "Puss in Boots: The Last Wish",
+    "The Lego Batman Movie",
 
     # Jumanji franchise
     "Jumanji: Welcome to the Jungle",
@@ -296,7 +354,7 @@ REMAKE_PATTERNS = {
         'Spider.*Man', 'Batman', 'Superman', 'Wonder Woman', 'Aquaman',
         'Flash', 'Green.*Lantern', 'Fantastic.*Four', 'X.*Men', 'Deadpool',
         'Wolverine', 'Venom', 'Ghost.*Rider', 'Punisher', 'Daredevil',
-        'Hellboy', 'Blade', 'Iron.*Man', 'Thor', 'Captain.*America',
+        'Hellboy', '\\bBlade(?!\\sRunner)\\b', 'Iron.*Man', 'Thor', 'Captain.*America',
         'Hulk', 'Avengers', 'Guardians.*Galaxy', 'Ant.*Man', 'Doctor.*Strange',
         'Black.*Panther', 'Captain.*Marvel', 'Shazam', 'Suicide.*Squad',
         'Justice.*League', 'Dark.*Knight', 'Man.*of.*Steel'
@@ -314,8 +372,15 @@ REMAKE_TITLE_INDICATORS = [
     'Reboot', 'Remake', 'Origins', 'Begins', 'Returns', 'Forever', 'Rising'
 ]
 
+# Titles that can trip superhero pattern matching but are not superhero films
+SUPERHERO_EXCLUSIONS = [
+    "Blade Runner 2049",
+]
+
 # Title corrections for data quality
 TITLE_CORRECTIONS = {
+    "Jungle": "Jumanji: Welcome to the Jungle",
+    "Singing with Angels": "Sing",
     # Fix common truncated or incorrect titles
     'Hedgehog': 'Sonic the Hedgehog 3',
     'The Wild': 'The Wild Robot',
@@ -352,5 +417,30 @@ def apply_title_corrections(df):
         print(f"Applied {corrections_applied} title corrections")
     else:
         print("No title corrections needed")
+    # Contextual correction for "Deadpool & Wolverine"
+    if 'release_year' in df.columns:
+        m = df['title'].str.contains(r'Deadpool\s*&\s*Wolverine', case=False, na=False)
+        df.loc[m & (df['release_year'] == 2016), 'title'] = 'Deadpool'
+        df.loc[m & (df['release_year'] == 2018), 'title'] = 'Deadpool 2'
 
+
+    return df
+def tag_ip_and_sequels(df):
+    """Tag IP and sequels with minimal hard-coded rules used by the notebook post-processing.
+    Expects columns: 'title', optional 'is_ip', 'is_sequel'.
+    """
+    import pandas as pd
+    if df is None or df.empty or 'title' not in df.columns:
+        return df
+
+    if 'is_ip' not in df.columns:
+        df['is_ip'] = False
+    if 'is_sequel' not in df.columns:
+        df['is_sequel'] = False
+
+    # 2023 specific labels
+    mask_2023 = (df.get('release_year', pd.Series([None]*len(df))) == 2023)
+    df.loc[mask_2023 & df['title'].str.fullmatch(r'Barbie', case=False, na=False), 'is_ip'] = True
+    df.loc[mask_2023 & df['title'].str.contains(r'Super\s*Mario\s*Bros', case=False, na=False), 'is_ip'] = True
+    df.loc[mask_2023 & df['title'].str.contains(r'Indiana\s*Jones', case=False, na=False), 'is_sequel'] = True
     return df

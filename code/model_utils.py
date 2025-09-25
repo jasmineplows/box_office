@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from scipy.stats import kendalltau, spearmanr
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Columns that should not be used as model inputs.
@@ -348,26 +349,91 @@ def calculate_top_k_overlap(
 ) -> Optional[int]:
     """Return the overlap count between actual and predicted top ``k`` titles."""
 
-    if validation_frame is None or predictions is None:
+    metrics = compute_ranking_metrics(
+        validation_frame,
+        predictions,
+        target_col=target_col,
+        title_col=title_col,
+        k=k,
+    )
+    if not metrics:
         return None
-    if title_col not in validation_frame.columns or target_col not in validation_frame.columns:
-        return None
+    return int(metrics.get('top10_overlap')) if metrics.get('top10_overlap') is not None else None
 
-    preds = np.asarray(predictions)
+
+def _dcg(scores: np.ndarray) -> float:
+    if scores.size == 0:
+        return 0.0
+    discounts = np.log2(np.arange(2, scores.size + 2))
+    return float(np.sum(scores / discounts))
+
+
+def compute_ranking_metrics(
+    validation_frame: Optional[pd.DataFrame],
+    predictions: Optional[Sequence[float]],
+    *,
+    target_col: str,
+    title_col: str = 'title',
+    k: int = 10,
+) -> Dict[str, float]:
+    """Return ranking-quality metrics comparing predictions to ``target_col``."""
+
+    if validation_frame is None or predictions is None:
+        return {}
+    if title_col not in validation_frame.columns or target_col not in validation_frame.columns:
+        return {}
+
+    preds = np.asarray(predictions, dtype=float)
     if len(preds) != len(validation_frame):
-        return None
+        return {}
 
     working = validation_frame[[title_col, target_col]].copy()
     working['predicted'] = preds
-    working = working.dropna(subset=[title_col])
+    working = working.dropna(subset=[title_col, target_col])
     if working.empty:
-        return None
+        return {}
 
-    actual_top = working.sort_values(target_col, ascending=False).head(k)[title_col].astype(str)
-    predicted_top = working.sort_values('predicted', ascending=False).head(k)[title_col].astype(str)
+    actual_sorted = working.sort_values(target_col, ascending=False)
+    predicted_sorted = working.sort_values('predicted', ascending=False)
 
-    if actual_top.empty or predicted_top.empty:
-        return None
+    k_actual = min(k, len(actual_sorted))
+    k_pred = min(k, len(predicted_sorted))
+    actual_top_titles = actual_sorted.head(k_actual)[title_col].astype(str).tolist()
+    predicted_top_titles = predicted_sorted.head(k_pred)[title_col].astype(str).tolist()
+    overlap = len(set(actual_top_titles) & set(predicted_top_titles))
+    recall = overlap / k_actual if k_actual > 0 else np.nan
 
-    overlap = set(actual_top) & set(predicted_top)
-    return int(len(overlap))
+    # Normalised DCG@k (using scaled actual revenue as gain)
+    actual_gains = actual_sorted[target_col].to_numpy(dtype=float)
+    max_gain = float(np.nanmax(actual_gains)) if actual_gains.size else 0.0
+    if not np.isfinite(max_gain) or max_gain <= 0:
+        max_gain = 1.0
+    pred_gains = predicted_sorted.head(k_pred)[target_col].to_numpy(dtype=float) / max_gain
+    ideal_gains = actual_sorted.head(k_actual)[target_col].to_numpy(dtype=float) / max_gain
+    dcg_pred = _dcg(pred_gains)
+    dcg_ideal = _dcg(ideal_gains)
+    ndcg = dcg_pred / dcg_ideal if dcg_ideal > 0 else np.nan
+
+    # Rank correlations on full validation set
+    if working[target_col].nunique() <= 1 or working['predicted'].nunique() <= 1:
+        spearman = np.nan
+        kendall = np.nan
+    else:
+        spearman_res = spearmanr(working[target_col], working['predicted'])
+        kendall_res = kendalltau(working[target_col], working['predicted'])
+        spearman = getattr(spearman_res, 'statistic', None)
+        if spearman is None:
+            spearman = spearman_res[0] if isinstance(spearman_res, (tuple, list)) else spearman_res
+        kendall = getattr(kendall_res, 'statistic', None)
+        if kendall is None:
+            kendall = kendall_res[0] if isinstance(kendall_res, (tuple, list)) else kendall_res
+
+    metrics = {
+        'top10_overlap': float(overlap),
+        'recall_at_10': float(recall) if np.isfinite(recall) else None,
+        'ndcg_at_10': float(ndcg) if np.isfinite(ndcg) else None,
+        'spearman_corr': float(spearman) if np.isfinite(spearman) else None,
+        'kendall_corr': float(kendall) if np.isfinite(kendall) else None,
+    }
+
+    return {key: value for key, value in metrics.items() if value is not None}

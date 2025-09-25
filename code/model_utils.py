@@ -428,9 +428,12 @@ def compute_ranking_metrics(
         if kendall is None:
             kendall = kendall_res[0] if isinstance(kendall_res, (tuple, list)) else kendall_res
 
+    precision = overlap / k_pred if k_pred > 0 else np.nan
+
     metrics = {
         'top10_overlap': float(overlap),
         'recall_at_10': float(recall) if np.isfinite(recall) else None,
+        'precision_at_10': float(precision) if np.isfinite(precision) else None,
         'ndcg_at_10': float(ndcg) if np.isfinite(ndcg) else None,
         'spearman_corr': float(spearman) if np.isfinite(spearman) else None,
         'kendall_corr': float(kendall) if np.isfinite(kendall) else None,

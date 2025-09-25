@@ -7,7 +7,9 @@ work without duplicating logic.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence, Tuple
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -209,3 +211,163 @@ def get_top10_predictions(
 
     return top10[display_cols].reset_index(drop=True)
 
+
+def log_results_to_mlflow(
+    results: Dict[str, Any],
+    *,
+    run_name: Optional[str] = None,
+    params: Optional[Dict[str, Any]] = None,
+    tags: Optional[Dict[str, Any]] = None,
+    model: Optional[Any] = None,
+    model_type: str = 'sklearn',
+    validation_frame: Optional[pd.DataFrame] = None,
+    prediction_artifact_name: str = 'validation_predictions.csv',
+    artifacts: Optional[Dict[str, Union[str, Path]]] = None,
+    extra_metrics: Optional[Dict[str, float]] = None,
+    feature_frame: Optional[pd.DataFrame] = None,
+    input_example_rows: int = 10,
+    dataset_major_only: Optional[bool] = None,
+    dataset_english_only: Optional[bool] = None,
+) -> None:
+    """Log ``results`` from :func:`evaluate_model` to MLflow."""
+
+    try:
+        import mlflow
+        from mlflow import sklearn as mlflow_sklearn
+        from mlflow.models import infer_signature
+    except ImportError as exc:  # pragma: no cover - only triggered when mlflow missing
+        raise RuntimeError(
+            "mlflow is not installed. Add it to requirements.txt and pip install mlflow."
+        ) from exc
+
+    resolved_run_name = run_name or results.get('model_name') or 'model-run'
+
+    with mlflow.start_run(run_name=resolved_run_name):
+        derived_params: Dict[str, Any] = {}
+        if dataset_major_only is not None:
+            derived_params['data_scope_studios'] = 'major_only' if dataset_major_only else 'all_studios'
+        if dataset_english_only is not None:
+            derived_params['data_scope_language'] = 'english_only' if dataset_english_only else 'all_languages'
+
+        if params or derived_params:
+            sanitized_params: Dict[str, Any] = {}
+            for key, value in {**derived_params, **(params or {})}.items():
+                if isinstance(value, (str, int, float, bool)) or value is None:
+                    sanitized_params[key] = value
+                else:
+                    sanitized_params[key] = str(value)
+            if sanitized_params:
+                mlflow.log_params(sanitized_params)
+
+        derived_tags: Dict[str, str] = {}
+        if dataset_major_only is not None:
+            derived_tags['dataset.studio_scope'] = 'major_only' if dataset_major_only else 'all_studios'
+        if dataset_english_only is not None:
+            derived_tags['dataset.language_scope'] = 'english_only' if dataset_english_only else 'all_languages'
+
+        if tags or derived_tags:
+            sanitized_tags = {key: (str(value) if value is not None else '') for key, value in {**derived_tags, **(tags or {})}.items()}
+            mlflow.set_tags(sanitized_tags)
+
+        core_metrics = {
+            key: float(results[key])
+            for key in ('rmse', 'mae', 'mape', 'r2')
+            if key in results and results[key] is not None
+        }
+        if extra_metrics:
+            core_metrics.update({key: float(value) for key, value in extra_metrics.items()})
+        if core_metrics:
+            mlflow.log_metrics(core_metrics)
+
+        model_to_log = model or results.get('model_object')
+        signature = None
+        input_example_df = None
+        feature_sample = None
+        if feature_frame is not None:
+            feature_frame = feature_frame.reset_index(drop=True).copy()
+            if input_example_rows > 0:
+                input_example_df = feature_frame.head(input_example_rows).reset_index(drop=True)
+            # Use at most 500 rows for signature inference to balance fidelity and size.
+            sample_rows = min(len(feature_frame), max(input_example_rows, 500))
+            if sample_rows > 0:
+                feature_sample = feature_frame.head(sample_rows)
+
+        if feature_sample is not None and model_to_log is not None:
+            try:
+                preds_for_signature = model_to_log.predict(feature_sample)
+                signature = infer_signature(feature_sample, preds_for_signature)
+            except Exception:
+                signature = None
+
+        if model_to_log is not None:
+            # ``artifact_path`` was renamed to ``name`` in newer MLflow versions.
+            sklearn_params = mlflow_sklearn.log_model.__code__.co_varnames
+            sklearn_path_kw = 'name' if 'name' in sklearn_params else 'artifact_path'
+            pyfunc_params = mlflow.pyfunc.log_model.__code__.co_varnames
+            pyfunc_path_kw = 'name' if 'name' in pyfunc_params else 'artifact_path'
+
+            if model_type == 'sklearn':
+                mlflow_sklearn.log_model(
+                    model_to_log,
+                    **{sklearn_path_kw: 'model'},
+                    signature=signature,
+                    input_example=input_example_df,
+                )
+            else:
+                mlflow.pyfunc.log_model(
+                    python_model=model_to_log,
+                    **{pyfunc_path_kw: 'model'},
+                    signature=signature,
+                    input_example=input_example_df,
+                )
+
+        if validation_frame is not None and 'predictions' in results:
+            predictions = np.asarray(results['predictions'])
+            if len(predictions) == len(validation_frame):
+                temp_df = validation_frame.copy()
+                temp_df['predicted'] = predictions
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    temp_path = Path(tmpdir) / prediction_artifact_name
+                    temp_df.to_csv(temp_path, index=False)
+                    mlflow.log_artifact(str(temp_path), artifact_path='predictions')
+
+    if artifacts:
+        for name, location in artifacts.items():
+            path_obj = Path(location)
+            if path_obj.exists():
+                mlflow.log_artifact(str(path_obj), artifact_path=str(name))
+
+
+def calculate_top_k_overlap(
+    validation_frame: Optional[pd.DataFrame],
+    predictions: Optional[Sequence[float]],
+    *,
+    target_col: str,
+    title_col: str = 'title',
+    k: int = 10,
+) -> Optional[int]:
+    """Return the overlap count between actual and predicted top ``k`` titles."""
+
+    if validation_frame is None or predictions is None:
+        return None
+    if title_col not in validation_frame.columns or target_col not in validation_frame.columns:
+        return None
+
+    preds = np.asarray(predictions)
+    if len(preds) != len(validation_frame):
+        return None
+
+    working = validation_frame[[title_col, target_col]].copy()
+    working['predicted'] = preds
+    working = working.dropna(subset=[title_col])
+    if working.empty:
+        return None
+
+    actual_top = working.sort_values(target_col, ascending=False).head(k)[title_col].astype(str)
+    predicted_top = working.sort_values('predicted', ascending=False).head(k)[title_col].astype(str)
+
+    if actual_top.empty or predicted_top.empty:
+        return None
+
+    overlap = set(actual_top) & set(predicted_top)
+    return int(len(overlap))

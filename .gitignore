@@ -24,3 +24,6 @@ data/*.tsv
 
 # Claude config
 CLAUDE.md
+
+# mlflow
+/mlruns

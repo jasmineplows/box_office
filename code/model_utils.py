@@ -44,7 +44,7 @@ def prepare_features(
     target: str = 'revenue_domestic',
     exclude_cols: Optional[Sequence[str]] = None,
     filter_major_only: bool = False,
-    drop_major_flag_from_features: bool = True,
+    drop_major_flag_from_features: bool = False,
     verbose: bool = True,
 ) -> Tuple[pd.DataFrame, List[str], str]:
     """Return a copy of ``df`` prepared for modeling and the feature list.
@@ -63,7 +63,7 @@ def prepare_features(
         (``is_major_studio == 1``).
     drop_major_flag_from_features:
         If ``True`` the ``is_major_studio`` column will not be included in
-        the returned feature list (helpful when it is constant).
+        the returned feature list (useful when you manually filter majors elsewhere).
     verbose:
         When ``True`` the function prints a short summary mirroring what the
         notebooks previously reported.

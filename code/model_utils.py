@@ -37,7 +37,8 @@ DEFAULT_EXCLUDE_COLS: Tuple[str, ...] = (
 # Helpful flags that are useful to surface when presenting results.
 DEFAULT_FEATURE_FLAGS: Tuple[str, ...] = (
     'is_marvel', 'is_dc', 'is_star_wars', 'is_superhero', 'is_sequel',
-    'is_live_action_remake', 'is_major_studio', 'is_disney'
+    'is_live_action_remake', 'is_major_studio', 'is_disney',
+    'is_english', 'is_origin_usa', 'is_origin_uk_ie', 'is_origin_canada', 'is_origin_us_uk_ca'
 )
 
 

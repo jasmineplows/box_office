@@ -6,8 +6,24 @@ This file contains curated lists of movies for feature detection in the box offi
 Lists are organized by franchise, studio, and content type for easy maintenance.
 """
 
+# Utility --------------------------------------------------------------------
+
+def _dedupe_preserve_order(values):
+    """Return ``values`` minus duplicates while preserving original order."""
+
+    seen = set()
+    deduped = []
+    for item in values:
+        key = item.lower() if isinstance(item, str) else item
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
 # Disney Live-Action Remakes
-DISNEY_LIVE_ACTION_REMAKES = [
+DISNEY_LIVE_ACTION_REMAKES = _dedupe_preserve_order([
     "101 Dalmatians (1996)",
     "Alice in Wonderland (2010)",
     "Cinderella (2015)",
@@ -25,15 +41,15 @@ DISNEY_LIVE_ACTION_REMAKES = [
     "Snow White (2025)",
     "Lilo & Stitch (2025)",
     "Moana (2026)"
-]
+])
 
 # Other Studio Live-Action Remakes/Adaptations
-OTHER_LIVE_ACTION_REMAKES = [
+OTHER_LIVE_ACTION_REMAKES = _dedupe_preserve_order([
     "How to Train Your Dragon (2025)",  # DreamWorks/Universal
-]
+])
 
 # Marvel Cinematic Universe Films
-MARVEL_MCU_FILMS = [
+MARVEL_MCU_FILMS = _dedupe_preserve_order([
     # Phase One
     "Iron Man",
     "The Incredible Hulk",
@@ -85,10 +101,10 @@ MARVEL_MCU_FILMS = [
     "Spider-Man: Brand New Day",
     "Avengers: Doomsday",
     "Avengers: Secret Wars",
-]
+])
 
 # DC Extended Universe / DC Films
-DC_FILMS = [
+DC_FILMS = _dedupe_preserve_order([
     "Man of Steel",
     "Batman v Superman: Dawn of Justice",
     "Suicide Squad",
@@ -109,19 +125,19 @@ DC_FILMS = [
     "Joker",
     "Joker: Folie à Deux",
     "Superman",
-]
+])
 
 # Star Wars Films (Disney Era)
-STAR_WARS_FILMS = [
+STAR_WARS_FILMS = _dedupe_preserve_order([
     "Star Wars: The Force Awakens",
     "Rogue One: A Star Wars Story",
     "Star Wars: The Last Jedi",
     "Solo: A Star Wars Story",
     "Star Wars: The Rise of Skywalker",
-]
+])
 
 # Fast & Furious Franchise
-FAST_FURIOUS_FILMS = [
+FAST_FURIOUS_FILMS = _dedupe_preserve_order([
     "Fast Five",
     "Fast & Furious 6",
     "Furious 7",
@@ -129,10 +145,10 @@ FAST_FURIOUS_FILMS = [
     "Hobbs & Shaw",
     "F9: The Fast Saga",
     "Fast X",
-]
+])
 
 # Other Franchise Sequels (sequels or spin-offs to established franchises)
-FRANCHISE_SEQUELS = [
+FRANCHISE_SEQUELS = _dedupe_preserve_order([
     # Jurassic World (sequels to Jurassic Park)
     "Jurassic World",
     "Jurassic World: Fallen Kingdom",
@@ -185,10 +201,7 @@ FRANCHISE_SEQUELS = [
     "28 Years Later",
     "Twisters",
     "War for the Planet of the Apes",
-
-    # Fantasy franchises
-    "Fantastic Beasts: The Crimes of Grindelwald",
-    "Fantastic Beasts: The Secrets of Dumbledore",
+    "Jurassic World: Rebirth",
 
     # Animated franchise entries
     "Hotel Transylvania 3: Summer Vacation",
@@ -208,17 +221,17 @@ FRANCHISE_SEQUELS = [
     "Spectre",
     "Skyfall",
     "No Time to Die",
-]
+])
 
 # Harry Potter / Wizarding World
-WIZARDING_WORLD_FILMS = [
+WIZARDING_WORLD_FILMS = _dedupe_preserve_order([
     "Fantastic Beasts and Where to Find Them",
     "Fantastic Beasts: The Crimes of Grindelwald",
     "Fantastic Beasts: The Secrets of Dumbledore",
-]
+])
 
 # Other Media Adaptations (TV Shows, Games, Toys, Book/Franchise Sequels)
-MEDIA_ADAPTATIONS = [
+MEDIA_ADAPTATIONS = _dedupe_preserve_order([
     "Transformers",
     "Transformers: Revenge of the Fallen",
     "Transformers: Dark of the Moon",
@@ -241,6 +254,7 @@ MEDIA_ADAPTATIONS = [
     "Battleship",
     "Barbie",
     "The Super Mario Bros. Movie",
+    "The Super Mario Bros. Movie 2",
 
     # Jurassic World franchise (sequels to original Jurassic Park)
     "Jurassic World",
@@ -258,6 +272,8 @@ MEDIA_ADAPTATIONS = [
     "Finding Dory",
     "Puss in Boots: The Last Wish",
     "The Lego Batman Movie",
+    "The Minecraft Movie",
+    "Minecraft",
 
     # Jumanji franchise
     "Jumanji: Welcome to the Jungle",
@@ -267,14 +283,10 @@ MEDIA_ADAPTATIONS = [
     "Spectre",
     "No Time to Die",
     "Skyfall",
-
-    # Video game adaptations
-    "The Minecraft Movie",
-    "Minecraft",
-]
+])
 
 # Non-MCU Superhero Films
-NON_MCU_SUPERHERO_FILMS = [
+NON_MCU_SUPERHERO_FILMS = _dedupe_preserve_order([
     # Sony Spider-Man (pre-MCU collaboration)
     "The Amazing Spider-Man",
     "The Amazing Spider-Man 2",
@@ -295,21 +307,6 @@ NON_MCU_SUPERHERO_FILMS = [
     "Fantastic Four (2015)",
     "Fantastic Four",
 
-    # DC Films (already covered in DC_FILMS list)
-    # Warner Bros Batman
-    "The Dark Knight",
-    "The Dark Knight Rises",
-    "Batman Begins",
-    "Batman v Superman: Dawn of Justice",
-    "Justice League",
-    "Zack Snyder's Justice League",
-
-    # Other DC
-    "Superman Returns",
-    "Green Lantern",
-    "Catwoman",
-    "Jonah Hex",
-
     # Other Studios
     "The Punisher",
     "Punisher: War Zone",
@@ -325,11 +322,15 @@ NON_MCU_SUPERHERO_FILMS = [
     "The Phantom",
     "The Shadow",
     "Dick Tracy",
-]
+])
 
 # Combined lists for easy access
-ALL_LIVE_ACTION_REMAKES = DISNEY_LIVE_ACTION_REMAKES + OTHER_LIVE_ACTION_REMAKES
-ALL_SUPERHERO_FILMS = MARVEL_MCU_FILMS + DC_FILMS + NON_MCU_SUPERHERO_FILMS
+ALL_LIVE_ACTION_REMAKES = _dedupe_preserve_order(
+    DISNEY_LIVE_ACTION_REMAKES + OTHER_LIVE_ACTION_REMAKES
+)
+ALL_SUPERHERO_FILMS = _dedupe_preserve_order(
+    MARVEL_MCU_FILMS + DC_FILMS + NON_MCU_SUPERHERO_FILMS
+)
 
 # Title patterns for flexible matching (when exact titles don't match)
 REMAKE_PATTERNS = {
@@ -343,12 +344,12 @@ REMAKE_PATTERNS = {
         'How to Train Your Dragon'
     ],
     'other_adaptations': [
-        'How to Train Your Dragon', 'Sonic', 'Pokemon', 'Detective.*Pikachu',
-        'Transformers', 'G.I. Joe', 'Teenage Mutant Ninja Turtles',
+        'Sonic', 'Pokemon', 'Detective.*Pikachu',
+    'Transformers', 'G.I. Joe', 'Teenage Mutant Ninja Turtles',
         'The Smurfs', 'Garfield', 'Scooby', 'Tom.*Jerry', 'Angry Birds',
         'Battleship', 'Clue', 'Monopoly', 'Jurassic.*World', 'Minions',
         'Despicable.*Me', 'Finding.*Dory', 'Jumanji',
-        'Spectre', 'Bond', 'James.*Bond', 'Minecraft'
+        'Spectre', 'Bond', 'James.*Bond', 'Minecraft', 'Mario'
     ],
     'superhero': [
         'Spider.*Man', 'Batman', 'Superman', 'Wonder Woman', 'Aquaman',

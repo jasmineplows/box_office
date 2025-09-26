@@ -380,52 +380,105 @@ SUPERHERO_EXCLUSIONS = [
 
 # Title corrections for data quality
 TITLE_CORRECTIONS = {
-    "Jungle": "Jumanji: Welcome to the Jungle",
-    "Singing with Angels": "Sing",
-    # Fix common truncated or incorrect titles
-    'Hedgehog': 'Sonic the Hedgehog 3',
-    'The Wild': 'The Wild Robot',
-    'Deadpool': 'Deadpool & Wolverine',  # If truncated
-    'Transformer': 'Transformers',
+    # Exact-title replacements for known data-quality issues.
+    # (Use lowercase keys when applying so matches are precise.)
+    "singing with angels": "Sing",
+    "the wild": "The Wild Robot",
+    "deadpool 3": "Deadpool & Wolverine",
+    "hedgehog": "Sonic the Hedgehog 3",
+    "transformers one (2025)": "Transformers One",
 }
 
 def apply_title_corrections(df):
-    """
-    Apply systematic title corrections to fix data quality issues
+    """Apply literal title replacements defined in :data:`TITLE_CORRECTIONS`."""
+    if 'title' not in df.columns:
+        return df
 
-    Args:
-        df: DataFrame with 'title' and 'release_year' columns
-
-    Returns:
-        DataFrame with corrected titles
-    """
+    mapping = {key.lower(): value for key, value in TITLE_CORRECTIONS.items()}
     corrections_applied = 0
 
-    for incorrect_title, correct_title in TITLE_CORRECTIONS.items():
-        # Look for exact matches or partial matches that might be truncated
-        mask = df['title'].str.contains(incorrect_title, case=False, na=False) & (df['title'] != correct_title)
+    def _rewrite(title: str) -> str:
+        nonlocal corrections_applied
+        original = str(title).strip()
+        key = original.lower()
+        new_title = mapping.get(key)
+        if new_title and new_title != original:
+            corrections_applied += 1
+            return new_title
+        return original
 
-        if mask.any():
-            # Only fix if the found title is significantly shorter (likely truncated)
-            problematic_entries = df[mask]
-            for idx, row in problematic_entries.iterrows():
-                if len(row['title']) < len(correct_title) * 0.8:  # Title is much shorter than expected
-                    df.loc[idx, 'title'] = correct_title
-                    corrections_applied += 1
-                    print(f"✅ Title correction: '{row['title']}' → '{correct_title}' ({row['release_year']})")
+    df['title'] = df['title'].astype(str).apply(_rewrite)
 
-    if corrections_applied > 0:
-        print(f"Applied {corrections_applied} title corrections")
+    if corrections_applied:
+        print(f"✅ Applied {corrections_applied} title corrections")
     else:
         print("No title corrections needed")
-    # Contextual correction for "Deadpool & Wolverine"
-    if 'release_year' in df.columns:
-        m = df['title'].str.contains(r'Deadpool\s*&\s*Wolverine', case=False, na=False)
-        df.loc[m & (df['release_year'] == 2016), 'title'] = 'Deadpool'
-        df.loc[m & (df['release_year'] == 2018), 'title'] = 'Deadpool 2'
-
 
     return df
+
+
+def normalize_domestic_titles(df):
+    """Clean recurring mismatches in the merged BOM/TMDb dataset.
+
+    This helper is intended for notebooks that load ``dataset_domestic_*`` CSVs.
+    It applies literal corrections, fixes year-specific aliasing (e.g. Deadpool
+    entries renamed to *Deadpool & Wolverine*), clears out fabricated revenues
+    for direct-to-video titles, and drops duplicate (title, release_year) rows
+    keeping the highest observed revenue.
+    """
+
+    if df is None or getattr(df, 'empty', True):
+        return df
+
+    import pandas as pd  # Local import to avoid hard dependency for callers
+
+    cleaned = apply_title_corrections(df.copy())
+
+    if 'release_year' in cleaned.columns:
+        cleaned['release_year'] = pd.to_numeric(cleaned['release_year'], errors='coerce').astype('Int64')
+
+    # Restore canonical titles for year-specific aliases that were previously
+    # overwritten during scraping/clean-up steps.
+    replacements = {
+        ("Deadpool & Wolverine", 2016): "Deadpool",
+        ("Deadpool & Wolverine", 2018): "Deadpool 2",
+        ("Jumanji: Welcome to the Jungle", 2016): "The Jungle Book",
+        ("Jumanji: Welcome to the Jungle", 2021): "Jungle Cruise",
+        ("Adventures of Aladdin", 2019): "Aladdin",
+    }
+
+    if 'title' in cleaned.columns:
+        for (legacy_title, legacy_year), canonical_title in replacements.items():
+            mask = (cleaned['title'] == legacy_title) & (cleaned.get('release_year') == legacy_year)
+            if mask.any():
+                cleaned.loc[mask, 'title'] = canonical_title
+                if 'original_title' in cleaned.columns:
+                    cleaned.loc[mask, 'original_title'] = canonical_title
+
+    # Entries that should not carry theatrical revenue.
+    zero_out = [
+        ("LEGO DC Comics Super Heroes: Aquaman - Rage of Atlantis", 2018),
+    ]
+
+    revenue_cols = [col for col in ['revenue_domestic', 'domestic_revenue', 'revenue'] if col in cleaned.columns]
+    for title, year in zero_out:
+        mask = (cleaned.get('title') == title) & (cleaned.get('release_year') == year)
+        if mask.any():
+            for col in revenue_cols:
+                cleaned.loc[mask, col] = pd.NA
+
+    if 'title' in cleaned.columns and 'release_year' in cleaned.columns:
+        sort_cols = ['release_year']
+        ascending = [True]
+        if revenue_cols:
+            sort_cols.extend(revenue_cols)
+            ascending.extend([False] * len(revenue_cols))
+        cleaned = (cleaned
+                   .sort_values(sort_cols, ascending=ascending)
+                   .drop_duplicates(subset=['title', 'release_year'], keep='first')
+                   .reset_index(drop=True))
+
+    return cleaned
 def tag_ip_and_sequels(df):
     """Tag IP and sequels with minimal hard-coded rules used by the notebook post-processing.
     Expects columns: 'title', optional 'is_ip', 'is_sequel'.

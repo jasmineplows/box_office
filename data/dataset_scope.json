@@ -1,4 +1,7 @@
 {
   "filter_major_studios": false,
-  "filter_english_only": false
+  "filter_english_only": false,
+  "studio_note": "all studios",
+  "language_note": "all languages",
+  "row_count": 1462
 }

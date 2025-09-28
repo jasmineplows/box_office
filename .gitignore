@@ -18,10 +18,6 @@ ENV/
 # macOS
 .DS_Store
 
-# Data files (large files that exceed GitHub's 100MB limit)
-data/*.csv
-data/*.tsv
-
 # Claude config
 CLAUDE.md
 

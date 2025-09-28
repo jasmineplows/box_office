@@ -134,6 +134,7 @@ STAR_WARS_FILMS = _dedupe_preserve_order([
     "Star Wars: The Last Jedi",
     "Solo: A Star Wars Story",
     "Star Wars: The Rise of Skywalker",
+    "The Mandalorian and Grogu",  # Disney+ series spin-off movie
 ])
 
 # Fast & Furious Franchise
@@ -221,6 +222,19 @@ FRANCHISE_SEQUELS = _dedupe_preserve_order([
     "Spectre",
     "Skyfall",
     "No Time to Die",
+
+    # TV Show sequels/spin-offs
+    "The Mandalorian and Grogu",  # Star Wars TV show sequel movie
+
+    # Comedy franchise sequels
+    "Scary Movie 2",
+    "Scary Movie 3",
+    "Scary Movie 4",
+    "Scary Movie 5",
+    "Scary Movie 6",
+
+    # Nintendo/Video Game sequels
+    "The Super Mario Galaxy Movie",  # Sequel to Super Mario Bros Movie
 ])
 
 # Harry Potter / Wizarding World
@@ -255,6 +269,7 @@ MEDIA_ADAPTATIONS = _dedupe_preserve_order([
     "Barbie",
     "The Super Mario Bros. Movie",
     "The Super Mario Bros. Movie 2",
+    "The Super Mario Galaxy Movie",
 
     # Jurassic World franchise (sequels to original Jurassic Park)
     "Jurassic World",
@@ -275,6 +290,7 @@ MEDIA_ADAPTATIONS = _dedupe_preserve_order([
     "The Minecraft Movie",
     "Minecraft",
 
+
     # Jumanji franchise
     "Jumanji: Welcome to the Jungle",
     "Jumanji: The Next Level",
@@ -283,6 +299,18 @@ MEDIA_ADAPTATIONS = _dedupe_preserve_order([
     "Spectre",
     "No Time to Die",
     "Skyfall",
+
+    # Book adaptations / franchise
+    "The Cat in the Hat",
+    "The Cat in the Hat (2003)",
+
+    # Young Adult Book Franchises
+    "The Hunger Games",
+    "The Hunger Games: Catching Fire",
+    "The Hunger Games: Mockingjay - Part 1",
+    "The Hunger Games: Mockingjay - Part 2",
+    "The Hunger Games: The Ballad of Songbirds and Snakes",
+    "The Hunger Games: Sunrise on the Reaping",
 ])
 
 # Non-MCU Superhero Films
@@ -349,7 +377,8 @@ REMAKE_PATTERNS = {
         'The Smurfs', 'Garfield', 'Scooby', 'Tom.*Jerry', 'Angry Birds',
         'Battleship', 'Clue', 'Monopoly', 'Jurassic.*World', 'Minions',
         'Despicable.*Me', 'Finding.*Dory', 'Jumanji',
-        'Spectre', 'Bond', 'James.*Bond', 'Minecraft', 'Mario'
+        'Spectre', 'Bond', 'James.*Bond', 'Minecraft', 'Mario',
+        'Cat.*in.*the.*Hat', 'Hunger.*Games'
     ],
     'superhero': [
         'Spider.*Man', 'Batman', 'Superman', 'Wonder Woman', 'Aquaman',
@@ -362,7 +391,7 @@ REMAKE_PATTERNS = {
     ],
     'star_wars': [
         'Star Wars', 'Rogue One', 'Solo.*Star Wars', 'Force Awakens',
-        'Last Jedi', 'Rise.*Skywalker'
+        'Last Jedi', 'Rise.*Skywalker', 'Mandalorian'
     ],
     'fast_furious': ['Fast', 'Furious'],
     'harry_potter': ['Harry Potter', 'Hogwarts', 'Fantastic Beasts']
@@ -387,6 +416,7 @@ TITLE_CORRECTIONS = {
     "deadpool 3": "Deadpool & Wolverine",
     "hedgehog": "Sonic the Hedgehog 3",
     "transformers one (2025)": "Transformers One",
+    "scary movie": "Scary Movie 6",  # 2026 movie should be 6th installment
 }
 
 def apply_title_corrections(df):

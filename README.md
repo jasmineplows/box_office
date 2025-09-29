@@ -4,7 +4,7 @@ This project aims to predict **US 2026 domestic box office** success.
 
 ## 🎬 Project Overview
 
-The analysis combines **Box Office Mojo** lifetime domestic grosses with **TMDb metadata** to create a comprehensive dataset of English-language theatrical releases from 2015-2025.
+The analysis combines **Box Office Mojo** lifetime domestic grosses with **TMDb metadata** to create a comprehensive dataset of English-language theatrical releases from 2010-2025.
 
 ## 📊 Current Datasets
 - **Box Office Mojo**: All-time domestic grosses + distributor information
@@ -81,7 +81,7 @@ box_office/
 
 ## 📈 Analysis Highlights
 
-- **1,532 movies** with complete lifetime domestic revenue data (2015-2025)
+- **1,532 movies** with complete lifetime domestic revenue data (2010-2025)
 - **67 engineered features** including studio flags, genre encoding, and IP detection
 - **Comprehensive IP analysis** covering franchises, remakes, adaptations, and superhero films
 - **Interactive visualizations** showing performance trends by year across studios, genres, and IP categories
@@ -112,7 +112,7 @@ jupyter notebook code/1.get-data.ipynb
 - **Disney dominance**: Walt Disney Studios leads in average revenue per movie
 - **Action/Adventure**: Consistently highest-grossing primary genres
 - **Franchise concentration**: Marvel (26 films), DC (13 films), and Star Wars (5 films) drive major revenue
-- **Year-over-year evolution**: Clear trends in studio market share and genre preferences (2015-2025)
+- **Year-over-year evolution**: Clear trends in studio market share and genre preferences (2010-2025)
 
 ### Market Evolution
 - **IP percentage trends**: Analysis shows changing reliance on established intellectual properties

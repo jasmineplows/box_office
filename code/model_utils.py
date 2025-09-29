@@ -230,6 +230,7 @@ def log_results_to_mlflow(
     input_example_rows: int = 10,
     dataset_major_only: Optional[bool] = None,
     dataset_english_only: Optional[bool] = None,
+    dataset_start_year: Optional[int] = None,
 ) -> None:
     """Log ``results`` from :func:`evaluate_model` to MLflow."""
 
@@ -250,6 +251,8 @@ def log_results_to_mlflow(
             derived_params['data_scope_studios'] = 'major_only' if dataset_major_only else 'all_studios'
         if dataset_english_only is not None:
             derived_params['data_scope_language'] = 'english_only' if dataset_english_only else 'all_languages'
+        if dataset_start_year is not None:
+            derived_params['dataset_start_year'] = dataset_start_year
 
         if params or derived_params:
             sanitized_params: Dict[str, Any] = {}
@@ -266,6 +269,8 @@ def log_results_to_mlflow(
             derived_tags['dataset.studio_scope'] = 'major_only' if dataset_major_only else 'all_studios'
         if dataset_english_only is not None:
             derived_tags['dataset.language_scope'] = 'english_only' if dataset_english_only else 'all_languages'
+        if dataset_start_year is not None:
+            derived_tags['dataset.start_year'] = str(dataset_start_year)
 
         if tags or derived_tags:
             sanitized_tags = {key: (str(value) if value is not None else '') for key, value in {**derived_tags, **(tags or {})}.items()}

@@ -13,6 +13,14 @@ Available Dataset Subsets:
 
 from pathlib import Path
 import json
+from typing import Optional, Dict
+
+import pandas as pd
+
+try:
+    from movie_lists import normalize_domestic_titles
+except ImportError:  # pragma: no cover
+    normalize_domestic_titles = None
 
 # =============================================================================
 # MAIN CONFIGURATION - Change this to switch dataset scope for all notebooks
@@ -132,6 +140,62 @@ def get_config_summary(config=None):
         summary += f"   ⚠️ Using full dataset for validation (force_full_validation=True)\n"
 
     return summary
+
+
+def build_scope_config(language_scope: str, studio_scope: str, year_start: int, data_dir: str = '../data') -> Dict[str, any]:
+    """Derive a dataset configuration dict from scope strings."""
+    language_scope = (language_scope or 'all_languages').lower()
+    studio_scope = (studio_scope or 'all_studios').lower()
+
+    if studio_scope == 'all_studios' and language_scope == 'all_languages':
+        scope_key = 'full'
+    elif studio_scope == 'all_studios' and language_scope.startswith('english'):
+        scope_key = 'english'
+    elif studio_scope == 'major_only' and language_scope == 'all_languages':
+        scope_key = 'major'
+    else:
+        scope_key = 'english_major'
+
+    return {
+        'scope': scope_key,
+        'year_start': int(year_start or 2010),
+        'data_dir': data_dir,
+    }
+
+
+def load_dataset_frame(config: Optional[Dict[str, any]] = None, *, training: bool = False, verbose: bool = True) -> pd.DataFrame:
+    """Load the unified dataset and apply filters based on ``config``."""
+
+    dataset_config = get_dataset_config(config)
+    data_dir = Path(dataset_config['data_dir'])
+    base_path = data_dir / 'dataset_domestic_processed.csv'
+    if not base_path.exists():
+        raise FileNotFoundError(f"Base dataset not found: {base_path}")
+
+    df = pd.read_csv(base_path)
+    if normalize_domestic_titles is not None:
+        df = normalize_domestic_titles(df)
+
+    start_year = dataset_config['year_start']
+    if 'release_year' in df.columns:
+        df = df[df['release_year'].between(start_year, 2026, inclusive='both')]
+
+    if training and 'release_year' in df.columns:
+        df = df[df['release_year'] <= 2023]
+
+    if dataset_config.get('filter_english') and 'original_language' in df.columns:
+        df = df[df['original_language'].fillna('').str.lower() == 'en']
+
+    if dataset_config.get('filter_major') and 'is_major_studio' in df.columns:
+        df = df[df['is_major_studio'] == 1]
+
+    if verbose:
+        total = len(df)
+        year_min = df['release_year'].min() if 'release_year' in df.columns else 'n/a'
+        year_max = df['release_year'].max() if 'release_year' in df.columns else 'n/a'
+        print(f"📁 Loaded dataset ({dataset_config['name']}): {total:,} rows | Years {year_min}-{year_max}")
+
+    return df
 
 def save_config_to_file(config=None, filepath=None):
     """Save current configuration to a JSON file for sharing across notebooks."""

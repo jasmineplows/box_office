@@ -13,8 +13,20 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import warnings
 from scipy.stats import kendalltau, spearmanr
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+try:  # dataset scope helpers (available when notebooks run inside repo)
+    from dataset_config import (
+        DEFAULT_CONFIG as DATASET_DEFAULT_CONFIG,
+        build_scope_config,
+        load_dataset_frame,
+    )
+except ImportError:  # pragma: no cover - dataset_config lives outside package installs
+    DATASET_DEFAULT_CONFIG = {'scope': 'full', 'year_start': 2010, 'data_dir': '../data'}
+    build_scope_config = None
+    load_dataset_frame = None
 
 # Columns that should not be used as model inputs.
 DEFAULT_EXCLUDE_COLS: Tuple[str, ...] = (
@@ -40,6 +52,179 @@ DEFAULT_FEATURE_FLAGS: Tuple[str, ...] = (
     'is_live_action_remake', 'is_major_studio', 'is_disney',
     'is_english', 'is_origin_usa', 'is_origin_uk_ie', 'is_origin_canada', 'is_origin_us_uk_ca'
 )
+
+
+def _dataset_base_config(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Return a copy of the default dataset configuration with sane fallbacks."""
+
+    base = {}
+    if isinstance(DATASET_DEFAULT_CONFIG, dict):
+        base.update(DATASET_DEFAULT_CONFIG)
+    if overrides:
+        base.update(overrides)
+    base.setdefault('scope', 'full')
+    base.setdefault('year_start', 2010)
+    base.setdefault('data_dir', '../data')
+    base.setdefault('force_full_validation', False)
+    return base
+
+
+def _scope_defaults(scope_key: Optional[str]) -> Tuple[str, str]:
+    """Map configuration ``scope`` to language/studio fallbacks."""
+
+    scope = (scope_key or 'full').lower()
+    if scope == 'english':
+        return 'english_only', 'all_studios'
+    if scope == 'major':
+        return 'all_languages', 'major_only'
+    if scope == 'english_major':
+        return 'english_only', 'major_only'
+    return 'all_languages', 'all_studios'
+
+
+def _safe_lookup(source: Any, key: str) -> Any:
+    """Safely grab ``key`` from dict-like or attribute-like sources."""
+
+    if source is None:
+        return None
+    getter = getattr(source, 'get', None)
+    if callable(getter):
+        try:
+            return getter(key)
+        except Exception:  # pragma: no cover - defensive
+            pass
+    if isinstance(source, dict):  # fallback when custom ``get`` misbehaves
+        return source.get(key)
+    return getattr(source, key, None)
+
+
+def _extract_first(keys: Sequence[str], *sources: Any) -> Any:
+    """Return the first non-empty value for ``keys`` across ``sources``."""
+
+    for key in keys:
+        for src in sources:
+            value = _safe_lookup(src, key)
+            if value not in (None, ''):
+                return value
+    return None
+
+
+def _normalize_language_scope(value: Any, fallback: str) -> str:
+    if value is None:
+        return fallback
+    text = str(value).strip().lower()
+    if not text:
+        return fallback
+    if text in {'english_only', 'english', 'english-only', 'en', 'en_only', 'english only'}:
+        return 'english_only'
+    if 'english' in text:
+        return 'english_only'
+    if text in {'all_languages', 'all', 'full'}:
+        return 'all_languages'
+    return fallback
+
+
+def _normalize_studio_scope(value: Any, fallback: str) -> str:
+    if value is None:
+        return fallback
+    text = str(value).strip().lower()
+    if not text:
+        return fallback
+    if text in {'major_only', 'major', 'majors', 'major-studios', 'majors_only'}:
+        return 'major_only'
+    if 'major' in text:
+        return 'major_only'
+    if text in {'all_studios', 'all', 'full'}:
+        return 'all_studios'
+    return fallback
+
+
+def _normalize_year(value: Any, fallback: int) -> int:
+    if value is None:
+        return fallback
+    try:
+        year = int(float(str(value).strip()))
+    except (TypeError, ValueError):
+        return fallback
+    if 1900 <= year <= 2100:
+        return year
+    return fallback
+
+
+def infer_scope_config_from_run(
+    run_info: Optional[Any],
+    run_params: Optional[Dict[str, Any]] = None,
+    base_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Derive a dataset configuration dict from MLflow metadata."""
+
+    defaults = _dataset_base_config(base_config)
+    fallback_lang, fallback_studio = _scope_defaults(defaults.get('scope'))
+    fallback_year = int(defaults.get('year_start') or 2010)
+
+    language_value = _extract_first(
+        ('data_scope_language', 'tag_language_scope', 'language_scope', 'language'),
+        run_info,
+        run_params,
+    )
+    studio_value = _extract_first(
+        ('data_scope_studios', 'tag_studio_scope', 'studio_scope', 'studios'),
+        run_info,
+        run_params,
+    )
+    year_value = _extract_first(
+        ('dataset_start_year', 'tag_start_year', 'train_year_min', 'train_start_year', 'training_year_start', 'year_start'),
+        run_info,
+        run_params,
+    )
+
+    resolved_language = _normalize_language_scope(language_value, fallback_lang)
+    resolved_studio = _normalize_studio_scope(studio_value, fallback_studio)
+    resolved_year = _normalize_year(year_value, fallback_year)
+
+    if build_scope_config is not None:
+        config = build_scope_config(
+            resolved_language,
+            resolved_studio,
+            resolved_year,
+            data_dir=defaults.get('data_dir'),
+        )
+    else:  # pragma: no cover - only triggered if dataset_config import fails
+        config = {
+            'scope': defaults.get('scope', 'full'),
+            'year_start': resolved_year,
+            'data_dir': defaults.get('data_dir'),
+            'filter_english': resolved_language == 'english_only',
+            'filter_major': resolved_studio == 'major_only',
+            'force_full_validation': defaults.get('force_full_validation', False),
+        }
+
+    config.setdefault('data_dir', defaults.get('data_dir'))
+    config.setdefault('force_full_validation', defaults.get('force_full_validation', False))
+    config['resolved_language_scope'] = resolved_language
+    config['resolved_studio_scope'] = resolved_studio
+    config['resolved_year_start'] = resolved_year
+    return config
+
+
+def load_dataset_for_run(
+    run_info: Optional[Any] = None,
+    run_params: Optional[Dict[str, Any]] = None,
+    *,
+    base_config: Optional[Dict[str, Any]] = None,
+    training: bool = False,
+    verbose: bool = True,
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """Load dataset rows matching ``run_info`` scope, falling back to ``base_config``."""
+
+    if load_dataset_frame is None:
+        raise RuntimeError(
+            'dataset_config.load_dataset_frame is unavailable. Ensure dataset_config.py is importable.'
+        )
+
+    config = infer_scope_config_from_run(run_info, run_params, base_config)
+    df = load_dataset_frame(config, training=training, verbose=verbose)
+    return df, config
 
 
 def prepare_features(
@@ -127,6 +312,32 @@ def prepare_features(
     return df_prepared, feature_cols, target
 
 
+def prepare_run_dataset(
+    run_info: Optional[Any] = None,
+    run_params: Optional[Dict[str, Any]] = None,
+    *,
+    base_config: Optional[Dict[str, Any]] = None,
+    target: str = 'revenue_domestic',
+    training: bool = False,
+    verbose: bool = False,
+) -> Tuple[pd.DataFrame, List[str], str, Dict[str, Any]]:
+    """Convenience wrapper that loads + prepares the dataset for ``run_info`` scope."""
+
+    df, resolved_config = load_dataset_for_run(
+        run_info,
+        run_params,
+        base_config=base_config,
+        training=training,
+        verbose=verbose,
+    )
+    df_prepared, feature_cols, target_name = prepare_features(
+        df,
+        target=target,
+        verbose=verbose,
+    )
+    return df_prepared, feature_cols, target_name, resolved_config
+
+
 def create_sample_weights(
     df: pd.DataFrame,
     *,
@@ -141,6 +352,37 @@ def create_sample_weights(
     return weights
 
 
+def align_features_to_model(model, feature_frame: pd.DataFrame) -> pd.DataFrame:
+    """Align ``feature_frame`` columns to the order the model was trained with."""
+
+    if not isinstance(feature_frame, pd.DataFrame):
+        return feature_frame
+
+    estimator = model
+    if hasattr(model, 'named_steps'):
+        for step_name, step in reversed(list(model.named_steps.items())):
+            if hasattr(step, 'feature_name_'):
+                estimator = step
+                break
+
+    trained_features = getattr(estimator, 'feature_name_', None)
+    if not trained_features:
+        return feature_frame
+
+    missing = [col for col in trained_features if col not in feature_frame.columns]
+    if missing:
+        warnings.warn(
+            f"Feature columns missing from current dataset; adding zeros: {missing}",
+            RuntimeWarning,
+        )
+        for col in missing:
+            feature_frame[col] = 0.0
+
+    # Reorder and drop any extra columns
+    aligned = feature_frame[trained_features].copy()
+    return aligned
+
+
 def evaluate_model(
     model,
     X_val: pd.DataFrame,
@@ -149,7 +391,8 @@ def evaluate_model(
     model_name: str,
 ) -> Dict[str, object]:
     """Evaluate ``model`` on validation data and return metric summary."""
-    y_pred_log = model.predict(X_val)
+    X_val_aligned = align_features_to_model(model, X_val)
+    y_pred_log = model.predict(X_val_aligned)
     y_pred = np.expm1(y_pred_log)
 
     mse = mean_squared_error(y_val_actual, y_pred)
@@ -192,6 +435,7 @@ def get_top10_predictions(
         return None
 
     X_year = year_data[feature_cols]
+    X_year = align_features_to_model(model, X_year)
     y_pred = np.expm1(model.predict(X_year))
 
     year_data['predicted_revenue'] = y_pred

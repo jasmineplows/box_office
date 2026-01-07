@@ -43,6 +43,62 @@ DISNEY_LIVE_ACTION_REMAKES = _dedupe_preserve_order([
     "Moana (2026)"
 ])
 
+# Pixar Animation (feature and sequel tracking)
+PIXAR_ANIMATED_FEATURES = _dedupe_preserve_order([
+    "Toy Story",
+    "Toy Story 2",
+    "Toy Story 3",
+    "Toy Story 4",
+    "Inside Out",
+    "Inside Out 2",
+    "Finding Nemo",
+    "Finding Dory",
+    "The Incredibles",
+    "Incredibles 2",
+    "Monsters, Inc.",
+    "Monsters University",
+    "Cars",
+    "Cars 2",
+    "Cars 3",
+    "Ratatouille",
+    "WALL-E",
+    "Up",
+    "Brave",
+    "Coco",
+    "Onward",
+    "Soul",
+    "Luca",
+    "Turning Red",
+    "Elemental",
+    "Lightyear",
+    "The Good Dinosaur",
+    "A Bug's Life",
+])
+
+# Disney Animation franchises (non-Pixar) for family sequel tracking
+DISNEY_ANIMATED_FRANCHISES = _dedupe_preserve_order([
+    "Frozen",
+    "Frozen II",
+    "Moana",
+    "Moana 2",
+    "Ralph Breaks the Internet",
+    "Wreck-It Ralph",
+    "Tangled",
+    "Big Hero 6",
+    "Zootopia",
+    "Zootopia 2",
+    "Encanto",
+    "Wish",
+    "The Princess and the Frog",
+    "The Lion King",
+    "The Lion King II: Simba's Pride",
+    "The Little Mermaid",
+    "Mulan",
+    "Lilo & Stitch",
+    "Lilo & Stitch 2",
+    "The Aristocats",
+])
+
 # Other Studio Live-Action Remakes/Adaptations
 OTHER_LIVE_ACTION_REMAKES = _dedupe_preserve_order([
     "How to Train Your Dragon (2025)",  # DreamWorks/Universal
